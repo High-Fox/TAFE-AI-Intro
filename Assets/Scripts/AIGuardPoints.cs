@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System;
 using UnityEngine;
 
 public class AIGuardPoints : MonoBehaviour
@@ -11,7 +13,7 @@ public class AIGuardPoints : MonoBehaviour
     public GameObject player;
     [Tooltip("minimum distance to target point to move on")]
     public float minPositionDistance = 0.2f;
-    [Tooltip("how close player has to be to the current point to chase them")]
+    [Tooltip("how close player has to be to chase them")]
     public float chaseDistance = 3f;
     public float speed = 2f;
 
@@ -19,33 +21,43 @@ public class AIGuardPoints : MonoBehaviour
 
     void Update()
     {
-        GameObject targetPoint = points[pointIndex];
-
-        if (Vector2.Distance(targetPoint.transform.position, player.transform.position) < chaseDistance)
+        // if within certain distance to player, chase them and change the target point to whichever is nearest
+        if (DistanceTo(player) < chaseDistance)
         {
-            MoveTowards(player.transform);
+            MoveTowards(player);
+            // big brain method of getting nearest point
+            GameObject nearestPoint = points.OrderBy(point => DistanceTo(point)).First();
+            pointIndex = Array.IndexOf(points, nearestPoint);
         }
         else
         {
-            MoveTowards(targetPoint.transform);
+            GameObject targetPoint = points[pointIndex];
+            MoveTowards(targetPoint);
+            if (DistanceTo(targetPoint) < 0.2f)
+            {
+                CyclePointIndex();
+            }
         }
     }
 
-    private void MoveTowards(Transform target)
+    private float DistanceTo(GameObject gameObject)
+    {
+        return Vector2.Distance(movingObject.transform.position, gameObject.transform.position);
+    }
+
+    private void MoveTowards(GameObject target)
     {
         // This isnt how we were told to do it but its better ;)
-        Vector2 movedPos = Vector3.MoveTowards(movingObject.transform.position, target.position, speed * Time.deltaTime);
+        Vector2 movedPos = Vector3.MoveTowards(movingObject.transform.position, target.transform.position, speed * Time.deltaTime);
         movingObject.transform.position = movedPos;
-
-        if (Vector2.Distance(movedPos, target.position) < 0.2f)
-        {
-            NextPoint();
-        }
     }
 
-    private void NextPoint()
+    private void CyclePointIndex()
     {
-        // Add 1 to the positionIndex, looping it back to 0 if it would be higher than the amount of positions
-        pointIndex = (int)Mathf.Repeat(pointIndex + 1, points.Length);
+        // Add 1 to the pointIndex, looping it back to 0 if it would be higher than the amount of positions
+        if (++pointIndex > points.Length - 1)
+        {
+            pointIndex = 0;
+        }
     }
 }

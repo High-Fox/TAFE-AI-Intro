@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float speed = 3f;
+    [Tooltip("player speed")]
+    public float speed = 3.5f;
 
     // Update is called once per frame
     void Update()
